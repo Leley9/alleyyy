@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mapbox Map</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* Définition de la classe hidden pour masquer les éléments */
+    .hidden {
+      display: none;
+    }
+
+    /* Conteneur parent pour tous les boutons (gauche et droite) */
+    #topControls {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    /* Conteneur pour les boutons de gauche */
+    #topLeftControls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Conteneur pour les boutons de droite */
+    #topRightControls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Styles de base pour les boutons */
+    #addMarkerBtn, 
+    #profileButton, 
+    #menuButton,
+    #profileFilterBtn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Menu déroulant des catégories */
+    #dropdownMenu {
+      background: white;
+      border: 1px solid #ccc;
+      position: absolute;
+      top: 80px; /* Ajustez si nécessaire */
+      left: -110px;
+      flex-direction: column;
+    }
+
+    #dropdownMenu button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    /* Le menu déroulant des profils (profileDropdownMenu) sera similaire 
+       et positionné dans le JS, s'il le faut, avec une classe hidden au départ. */
+  </style>
+</head>
+<body>
+  <!-- Conteneur de la carte -->
+  <div id="map"></div>
+
+  <!-- Conteneur parent pour tous les boutons -->
+  <div id="topControls">
+    <!-- Conteneur top-left pour Ajouter un Marqueur et Profil -->
+    <div id="topLeftControls">
+      <!-- Bouton Ajouter un Marqueur -->
+      <button id="addMarkerBtn">
+        <svg width="50" height="50" viewBox="0 0 50 50" fill="none" 
+             xmlns="http://www.w3.org/2000/svg">
+          <rect x="1.5" y="1.5" width="47" height="47" rx="13.5" fill="#6B1C61" 
+                stroke="black" stroke-width="3"/>
+          <path d="M26.1069 23.3926V23.8926H26.6069H36.2497C36.5434 23.8926 36.825 24.0092 37.0326 24.2169C37.2402 24.4245 37.3569 24.7061 37.3569 24.9997C37.3569 25.2934 37.2402 25.575 37.0326 25.7826C36.825 25.9902 36.5434 26.1069 36.2497 26.1069H26.6069H26.1069V26.6069V36.2497C26.1069 36.5434 25.9902 36.825 25.7826 37.0326C25.575 37.2402 25.2934 37.3569 24.9997 37.3569C24.7061 37.3569 24.4245 37.2402 24.2169 37.0326C24.0092 36.825 23.8926 36.5434 23.8926 36.2497V26.6069V26.1069H23.3926H13.7497C13.4561 26.1069 13.1745 25.9902 12.9669 25.7826C12.7592 25.575 12.6426 25.2934 12.6426 24.9997C12.6426 24.7061 12.7592 24.4245 12.9669 24.2169C13.1745 24.0092 13.4561 23.8926 13.7497 23.8926H23.3926H23.8926V23.3926V13.7497C23.8926 13.4561 24.0092 13.1745 24.2169 12.9669C24.4245 12.7592 24.7061 12.6426 24.9997 12.6426C25.2934 12.6426 25.575 12.7592 25.7826 12.9669C25.9902 13.1745 26.1069 13.4561 26.1069 13.7497V23.3926Z" 
+                fill="#FFF200" stroke="black"/>
+        </svg>
+      </button>
+
+      <!-- Bouton Profil -->
+      <button id="profileButton" class="profile-btn">
+        <svg width="50" height="50" viewBox="0 0 50 50" fill="none" 
+             xmlns="http://www.w3.org/2000/svg">
+          <rect x="1.5" y="1.5" width="47" height="47" rx="13.5" fill="#6B1C61" stroke="black" stroke-width="3" />
+          <path d="M33.5 20C33.5 24.7217 29.8917 28.5 25.5 28.5C21.1083 28.5 17.5 24.7217 17.5 20C17.5 15.2783 21.1083 11.5 25.5 11.5C29.8917 11.5 33.5 15.2783 33.5 20Z" fill="#6B1C61" stroke="#FFF200" />
+          <line x1="16.5" y1="47" x2="16.5" y2="32" stroke="#FFF200" />
+          <line x1="35" y1="32.5" x2="16" y2="32.5" stroke="#FFF200" />
+          <line x1="34.5" y1="47" x2="34.5" y2="33" stroke="#FFF200" />
+        </svg>
+      </button>
+    </div> <!-- Fin #topLeftControls -->
+
+    <!-- Conteneur top-right pour le bouton Filtre et Catégorie -->
+    <div id="topRightControls">
+      <!-- Conteneur du bouton de filtrage de profils EN PREMIER -->
+      <div id="profileFilterContainer">
+        <button id="profileFilterBtn">
+          <svg width="50" height="50" viewBox="0 0 50 50" fill="none" 
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="1.5" y="1.5" width="47" height="47" rx="13.5" fill="#6B1C61" stroke="black" stroke-width="3"/>
+            <g filter="url(#filter0_d_0_1)">
+              <path d="M13 13V15L23 27V39H28V27L38 15V13H13Z" fill="#1ECD0B"/>
+              <path d="M13 13V15L23 27V39H28V27L38 15V13H13Z" stroke="black" stroke-miterlimit="10"/>
+            </g>
+            <defs>
+              <filter id="filter0_d_0_1" x="8.5" y="12.5" width="34" height="35" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                <feColorMatrix in="SourceAlpha" type="matrix" 
+                               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" 
+                               result="hardAlpha"/>
+                <feOffset dy="4"/>
+                <feGaussianBlur stdDeviation="2"/>
+                <feComposite in2="hardAlpha" operator="out"/>
+                <feColorMatrix type="matrix" 
+                               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+                <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
+                <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
+              </filter>
+            </defs>
+          </svg>
+        </button>
+
+        <!-- Menu déroulant des profils -->
+        <div id="profileDropdownMenu" class="hidden">
+          <!-- Ici on affichera dynamiquement les profils (photo + nom) -->
+        </div>
+      </div> <!-- Fin #profileFilterContainer -->
+
+      <!-- Conteneur du bouton menu (catégories) APRES -->
+      <div id="menuButtonContainer">
+        <button id="menuButton">
+          <svg width="50" height="50" viewBox="0 0 50 50" fill="none" 
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="1.5" y="1.5" width="47" height="47" rx="13.5" fill="#6B1C61" stroke="black" stroke-width="3"/>
+            <line x1="9" y1="24.5" x2="40" y2="24.5" stroke="#1ECD0B"/>
+            <line x1="9" y1="35.5" x2="40" y2="35.5" stroke="#1ECD0B"/>
+            <line x1="9" y1="12.5" x2="40" y2="12.5" stroke="#1ECD0B"/>
+          </svg>
+        </button>
+
+        <!-- Menu déroulant des catégories -->
+        <div id="dropdownMenu" class="hidden">
+          <button class="dropdown-item" data-category="Thrift Store">Thrift Store</button>
+          <button class="dropdown-item" data-category="Scrap Materials">Scrap Materials</button>
+          <button class="dropdown-item" data-category="Food">Food</button>
+          <button class="dropdown-item" data-category="Exhibitions">Exhibitions</button>
+          <button class="dropdown-item" data-category="Markets">Markets</button>
+        </div>
+      </div> <!-- Fin #menuButtonContainer -->
+    </div> <!-- Fin #topRightControls -->
+  </div> <!-- Fin #topControls -->
+
+
+  <!-- Fenêtre modale (popup) pour ajouter un lieu -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn" id="closeBtn">
+        <svg width="35" height="36" viewBox="0 0 35 36" fill="none" 
+             xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="17.5" cy="18" rx="17.5" ry="18" fill="black"/>
+          <path d="M26 9L8 27" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26 27L8 9" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+
+      <h2>Add a Marker</h2>
+      <form id="placeForm">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea>
+
+        <label for="category">Category:</label>
+        <select id="category" name="category"></select>
+
+        <label for="address">Adress:</label>
+        <input type="text" id="address" name="address" required placeholder="What's The Adress ? :)">
+
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modale Profil -->
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="closeProfileModal" class="close-btn">&times;</span>
+      <h2>Create Your Profile</h2>
+      <form id="profileForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+        <label for="profilePhoto">Profile Picture</label>
+        <input type="file" id="profilePhoto" accept="image/*" style="margin-bottom: 10px;" />
+        
+        <label for="userName">Name</label>
+        <input type="text" id="userName" placeholder="What's Your Name ? :)" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;" />
+        
+        <label for="userDescription">Description</label>
+        <textarea id="userDescription" placeholder="Describe Yourself" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; resize: none;"></textarea>
+        
+        <button type="submit" class="submit-btn" style="padding: 10px 20px; background-color: #6B1C61; color: white; border: none; border-radius: 5px; cursor: pointer;">Enregistrer</button>
+      </form>
+    </div>
+  </div>
+  
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
+<!-- Nouvelle modale pour afficher les informations de profil -->
+<div id="profileInfoModal" class="modal hidden">
+  <div class="modal-content">
+    <span id="closeProfileInfoModal" class="close-btn">&times;</span>
+    <h2>Profiles</h2>
+    <div id="profileInfoContainer">
+      <!-- Ici on affichera dynamiquement les infos du profil -->
+    </div>
+  </div>
+</div>
+
+
